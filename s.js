@@ -4,18 +4,15 @@ var sentiment = require('sentiment');
 var session = require('express-session');
 var bodyParser = require('body-parser');
 var fs = require('fs');
-var port = (process.env.VCAP_APP_PORT || 3000);
+var port = (process.env.VCAP_APP_PORT || 8000);
 
-// make Stream globally visible so we can clean up better
 var stream;
 var text1,text2 , textfile,statetext1,statetext1,statefile;
-//var r1;
 var css= "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
-//r1=sentiment('Abdullatif is A good and careful');
 var DEFAULT_TOPIC = "Abdullatif Albaseer";
 
-
 var app = express();
+
 // Configure the app web container
 app.configure(function() {
 	app.use(express.bodyParser());
@@ -25,7 +22,6 @@ app.configure(function() {
 
 app.get('/twitterCheck', function (req, res) {
    
-      //  res.send("Hello, " + data.name + ".  I am in your twitters.");
       res.send("Hello,   I am in your twitters.");
     
 });
@@ -39,7 +35,7 @@ var monitoringPhrase;
 function resetMonitoring() {
 	if (stream) {
 		var tempStream = stream;
-	    stream = null;  // signal to event handlers to ignore end/destroy
+	    stream = null; 
 		tempStream.destroySilent();
 	}
     monitoringPhrase = "";
@@ -56,45 +52,33 @@ function beginMonitoring(phrase) {
     tweeter.verifyCredentials(function (error, data) {
         if (error) {
         	resetMonitoring();
-           // console.error("Error connecting to Twitter: " + error);
             if (error.statusCode === 401)  {
-	            //console.error("Authorization failure.  Check your API keys.");
             }
         } else {
             tweeter.stream('statuses/filter', {
                 'track': monitoringPhrase
             }, function (inStream) {
-            	// remember the stream so we can destroy it when we create a new one.
-            	// if we leak streams, we end up hitting the Twitter API limit.
+            	
             	stream = inStream;
-                //console.log("Monitoring Twitter for " + monitoringPhrase);
                 stream.on('data', function (data) {
-                    // only evaluate the sentiment of English-language tweets
                     if (data.lang === 'en') 
                     {   
                         sentiment(data.text, function (err, result) {
-                           // tweetCount++;
                             tweetTotalSentiment += result.score;
                         });
                     }
                 });
                 stream.on('error', function (error, code) {
-	               // console.error("Error received from tweet stream: " + code);
 		            if (code === 420)  {
-	    		      //  console.error("API limit hit, are you sure from using it ?");
             		}
 	                resetMonitoring();
                 });
 				stream.on('end', function (response) {
-					if (stream) { // if we're not in the middle of a reset already
-					    // Handle a disconnection
-		            //    console.error("Stream ended unexpectedly, Analysing the data");
+					if (stream) { 
 		                resetMonitoring();
 	                }
 				});
 				stream.on('destroy', function (response) {
-				    // Handle a 'silent' disconnection from Twitter, no end/error event fired
-	                //console.error("Stream destroyed unexpectedly, Analysing the data");
 	                resetMonitoring();
 				});
             });
@@ -131,24 +115,7 @@ app.get('/',
              "</div></BODY></html>";
         if (!monitoringPhrase) {
             res.send(welcomeResponse);
-        } /*else {
-            var monitoringResponse = "<HEAD>" +
-                "<META http-equiv=\"refresh\" content=\"5; URL=http://" +
-                req.headers.host +
-                "/\">\n" +
-                "<title>Twitter Sentiment Analysis</title>\n" +
-                "</HEAD>\n" +
-                "<BODY>\n" +
-                "<P>\n" +
-                "The Twittersphere is feeling<br>\n" +
-                "<IMG align=\"middle\" src=\"" + sentimentImage() + "\"/><br>\n" +
-                "about " + monitoringPhrase + ".<br><br>" +
-                "Analyzed " + tweetCount + " tweets...<br>" +
-                "</P>\n" +
-                "<A href=\"/reset\">Monitor another phrase</A>\n" +
-                "</BODY>";
-            res.send(monitoringResponse);
-        }*/
+        }
     });
 
 app.get('/monitor', function (req, res) {
@@ -174,9 +141,7 @@ var sh= "<HEAD>" +
                " Enter the second statement </h3> <input type=\"text\" name=\"Input2\" style=\"width:40%;height:8%;font-size:17px\"  /><br/><br>\n" +
                "<input type=\"submit\" value = \"Test\" style=\"width:40%;height:8%;font-size:17px\">\n" +
                "</form></p>\n" +
-               /* "<form method=\"post\" action=\"/\">\n" +
-                "<input type=\"submit\" value = \"back\">\n" +
-              "</form>\n" +*/
+              
                "This page to analyse the two opinions about certain issue \n" + 
               "</P></div>\n" +
                "</BODY>";
@@ -208,8 +173,6 @@ app.get('/resulttext', function(req, res)
 	
 	var r2;
 	var compreresult;
- // var l=sentiment(data);
-  //  console.log(data);
  
 var r1 = sentiment(text1);
 var r2=sentiment(text2);
@@ -235,8 +198,7 @@ app.get('/resultfile', function(req, res)
 {
 	var Data,r1;
 	var compreresult;
- // var l=sentiment(data);
-  //  console.log(data);
+
  
 var fs = require("fs");
 var fileName = textfile;
@@ -250,8 +212,7 @@ fs.exists(fileName, function(exists) {
         fs.read(fd, buffer, 0, buffer.length, null, function(error, bytesRead, buffer) {
           var data = buffer.toString("utf8", 0, buffer.length);
            r1 = sentiment(data);
-          // console.log(data);
-                     //console.log(r1);
+         
                      if (r1.score > 0)
 {
 compreresult='The file text seems to be good  ';
@@ -283,24 +244,13 @@ app.post('/ctext', function(req, res){
  text1 = req.body.Input1;
  text2 = req.body.Input2;
  res.redirect('/resulttext');
-  /*fs.readFile(__dirname + '/testSentiment.html', function(err, data){
-                res.writeHead(200, {'Content-Type': +'/testSentiment.html' == 'json.js' ? 'text/javascript' : 'text/html'});
-                res.write(data, 'utf8');
-                res.end();
-            });
-//res.send('testSentiment.html');*/
- 
 });
 
 app.post('/cfile', function(req, res){
 	
  textfile = req.body.Inputfile;
  res.redirect('/resultfile');
- /*fs.readFile(__dirname + '/index.html', function(err, data){
-                res.writeHead(200, {'Content-Type': +'/index.html' == 'json.js' ? 'text/javascript' : 'text/html'});
-                res.write(data, 'utf8');
-                res.end();
-            });*/
+
 
 });
 app.listen(port);

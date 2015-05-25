@@ -1,6 +1,6 @@
 {
-  "name": "SimpleSentimentAnalysisApp",
-  "description": "Simple Sentiment Analysis App",
+  "name": "FinalProject",
+  "description": "FinalProject",
   "version": "0.9.0",
   "private": true,
   "dependencies": {
